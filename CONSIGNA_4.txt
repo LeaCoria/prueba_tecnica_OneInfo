@@ -1,0 +1,135 @@
+///CONECCION A BASE DE DATOS
+
+CONSTANTE db = database.connect()
+
+
+/// MODELO DE LOS OBJETOS RECIBIDOS DESDE LA DB
+
+CLASE Product():
+    FUNCION __CONSTRUCTOR__(id, name, code):
+        'id' = id
+        'name' = name
+        'code' = code
+
+
+CLASE OrderItem():
+    FUNCION __CONSTRUCTOR__(id, orderid, productid, price):
+        'id' = id
+        'orderid' = orderid
+        'productid' = productid
+        'price' = price
+
+
+CLASE OrderTable():
+    FUNCION __CONSTRUCTOR__(id, createdDate, status):
+        'id' = id
+        'createdDate' = createdDate
+        'status' = status
+
+
+FUNCION _get_principal_products(id_order):
+    CONSTANTE cursor = db.connection.cursor()
+    CONSTANTE sql = "SELECT DISTINCT Product.Id FROM Product
+                     INNER JOIN OrderItem ON Product.Id = OrderItem.ProductId
+                     INNER JOIN OrderTable ON OrderTable.Id = OrderItem.OrderId
+                     INNER JOIN RelationShip ON Product.Id = RelationShip.MainProductId
+                     WHERE OrderItem.OrderId = {{id_order}};"
+    
+    // EN LA SENTENCIA SQL USO INTERPOLACION DE VARIABLES CON "{{}}"
+    
+    cursor.EJECUTAR(sql)
+    CONSTANTE all_products = cursor.fetchall()
+    // LA CONSULTA SQL DEVUELVE UNA LISTA IDs DE PRODUCTOS PRINCIPALES EN LA ORDEN
+    RETORNAR all_products
+
+
+FUNCION _get_secondary_products(id_order):
+    CONSTANTE cursor = db.connection.cursor()
+    CONSTANTE sql = "SELECT DISTINCT Product.Id FROM Product
+                     INNER JOIN OrderItem ON Product.Id = OrderItem.ProductId
+                     INNER JOIN OrderTable ON OrderTable.Id = OrderItem.OrderId
+                     INNER JOIN RelationShip ON Product.Id = RelationShip.RelationedProductId
+                     WHERE OrderItem.OrderId = {{id_order}};"
+    cursor.EJECUTAR(sql)
+
+    // EN LA SENTENCIA SQL USO INTERPOLACION DE VARIABLES CON "{{}}"
+    // ASUMO QUE LA CONSULTA SQL DEVUELVE UNA LISTA DE 1xN CON LOS
+    // ID DE PRODUCTOS SECUNDARIOS RELACIONADOS A UN PRODUCTO PRINCIPAL DE LA ORDEN
+
+    CONSTANTE relationated_products_ids = cursor.fetchall()
+    RETORNAR relationated_products_ids
+
+
+FUNCION valid_subproduct(secondary_products, id_order):
+    CONSTANTE relationated_products_ids = _get_secondary_products(id_order)
+    VARIABLE secondary_products_valid = []
+    PARA CADA product_id in secondary_products:
+        SI product_id EN relationated_products_ids:
+            secondary_products_valid.AGREGAR(True)
+    SI  NOT (False in secondary_products_valid):
+        RETORNAR True
+    RETORNAR False
+
+
+FUNCION valid_combination(products_in_order, id_order):
+    CONSTANTE products = _get_principal_products(id_order)
+    VARIABLE primary_products_valid = []
+    VARIABLE secondary_products = []
+    PARA CADA product_id EN products_in_order:
+        SI product_id EN products:
+            primary_products_valid.AGREGAR(True)
+        SI NO:
+            secondary_products.AGREGAR(product_id)
+    SI NOT(False EN primary_products_valid) Y secondary_products.LONGITUD == 0:
+        RETORNAR True
+    SI NO:
+        RETORNAR NOT(False EN primary_products_valid) Y valid_subproduct(secondary_products, id_order)
+    RETORNAR False
+
+FUNCION search_products_id_by_order(id_order):
+    CONSTANTE cursor = db.connection.cursor()
+    CONSTANTE sql = "SELECT Product.Id FROM OrderTable, OrderItem,
+                    Product WHERE OrderTable.Id = OrderItem.OrderId AND
+                    Product.Id = OrderItem.ProductId AND OrderTable.Id = {{id_order}};"
+    
+    // EN LA SENTENCIA SQL USO INTERPOLACION DE VARIABLES CON "{{}}"
+    
+    cursor.EJECUTAR(sql)
+    CONSTANTE all_productsid = cursor.fetchall()
+
+    // ASUMO QUE LA CONSULTA SQL DEVUELVE UNA LISTA DE 1xN CON
+    // LOS ID DE PRODUCTOS RELACIONADOS A LA ORDEN A CONSULTAR
+
+    RETORNAR all_products_id
+
+
+FUNCION order_is_active(id_order):
+    
+    // USO LA SENTENCIA INTENTAR / ECEPCIÓN PARA VALIDAR QUE LA ORDEN INGRESADA EXISTA
+    
+    INTENTAR:
+        CONSTANTE cursor = db.connection.cursor()
+        CONSTANTE sql = "SELECT OrderTable.Id FROM OrderTable WHERE status = 'active';"
+
+        // EN LA SENTENCIA SQL USO INTERPOLACION DE VARIABLES CON "{{}}"
+
+        cursor.fetchall(sql)
+
+        // ASUMO QUE LA CONSULTA SQL DEVUELVE UNA LISTA DE 1xN
+        // QUE TIENE LOS ID DE LAS ÓRDENES ACTIVAS
+
+        CONSTANTE orders_actives = cursor.fetchall()
+        RETORNAR id_order in order_actives
+    ECEPCIÓN IndexError:
+        RETORNAR False
+
+FUNCION order_valid():
+    CONSTANTE id_order = LEER("INGRESE EL NÚMERO DE ORDEN")
+    SI order_is_active(id_order):
+        CONSTANTE products_in_order = search_products_id_by_order(id_order)
+        SI valid_combination(products_in_order, id_order):
+            RETORNAR True
+    RETORNAR False
+
+
+order_valid()

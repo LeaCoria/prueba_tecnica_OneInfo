@@ -1,0 +1,75 @@
+// CONEXION A BASE DE DATOS
+// EL INCISO d DE LA PRIMER CONSIGNA NO ESTÁ EXPLÍCITO EN EL CÓDIGO
+// YA QUE SE REALIZA UNA SOLA QUERY A LA DB POR TRANSACCIÓN
+
+CONSTANTE db = database.connect()
+
+
+/// FUNCIÓN QUE CONECTA A LA DB Y RETORNA TODOS LOS CLIENTES CON CUENTAS ACTIVAS
+/// RETORNA UNA LISTA DE OBJETOS CONTACTO
+
+FUNCION _get_all_contacts():
+    CONSTANTE cursor = db.connection.cursor()
+    CONSTANTE sql = "SELECT * FROM Contacto LIMIT 100;"
+
+    // COLOCO UN LIMIT QUE ES UNA BUENA PRÁCTICA 
+    // PARA QUE LA CONSULTA NO SEA DEMASIADO EXTENSA
+
+    cursor.execute(sql)
+    CONSTANTE contacts = cursor.fetchall()
+    RETORNAR contacts
+
+
+/// CREO LA CLASE "Account" CON SUS ATRIBUTOS, NO TIENE MÉTODOS
+
+CLASE Account():
+    FUNCION __CONSTRUCTOR__(Id, name):
+        'Id' = Id,
+        'name' = name
+
+
+FUNCION generate_all_accounts():
+    CONSTANTE contacts = _get_all_contacts()
+    VARIABLE accounts = []
+    VARIABLE account = NUEVA Account
+    PARA CADA VARIABLE contact EN contacts:
+        SI contact.accountId NO ES NULO:
+            account.Id = contact.accountId
+            account.name = contact.name
+            accounts.AGREGAR(account)
+    RETORNAR accounts
+
+
+FUNCION generate_accounts():
+    CONSTANTE cursor = db.connection.cursor()
+    CONSTANTE sql = "SELECT * FROM Cuenta LEFT JOIN Contacto ON Cuenta.Id = Contacto.accountId;"
+    cursor.execute(sql)
+    CONSTANTE accounts = cursor.fetchall()
+
+    // LA CONSULTA SQL RETORNA UNA LISTA DE OBJETOS CUENTA QUE ESTÁN ACTIVAS
+    
+    RETORNAR accounts
+
+
+FUNCION _get_accounts():
+
+    // CREO UNA CONSTANTE QUE RECIBA UNA LISTA DE OBJETOS CONTACTO
+
+    CONSTANTE customized_contacts = LEER(LISTA_CONTACTOS)
+    SI customized_contacts NO ES NULO:
+        VARIABLE asociated_accounts = []
+        CONSTANTE accounts = generate_accounts()
+        PARA CADA contact EN customized_contacts:
+            PARA CADA account EN accounts:
+                SI contact.accountId == account.Id:
+                    asociated_accounts.AGREGAR(account)
+        RETORNAR asociated_accounts
+
+    // EN CASO QUE NO SE INGRESE UNA LISTA DE OBJETOS, EL CÓDIGO RETORNARÁ
+    // UNA LISTA DE TODAS LAS CUENTAS CREADAS
+    
+    SINO:
+        CONSTANTE accounts = generate_all_accounts()
+        RETORNAR accounts
+
+_get_accounts()

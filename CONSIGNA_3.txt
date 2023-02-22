@@ -1,0 +1,23 @@
+3)a)
+SELECT * FROM OrderTable WHERE status = 'active';
+
+b)
+SELECT Product.Id, Product.Name, Product.Code
+FROM OrderTable, OrderItem, Product
+WHERE OrderTable.Status = 'active'
+AND OrderTable.Id = OrderItem.OrderId
+AND Product.Id = OrderItem.ProductId;
+
+// SI SE QUIERE TENER UN ORDEN DE LAS ÓRDENES SE PUEDE AGREGAR GROUP BY DE LA SIGUIENTE MANERA:
+
+SELECT Product.Id, Product.Name, Product.Code, OrderTable.Id
+FROM OrderTable, OrderItem, Product
+WHERE OrderTable.Status = 'active'
+AND OrderTable.Id = OrderItem.OrderId
+AND Product.Id = OrderItem.ProductId
+ORDER BY OrderTable.Id
+
+
+c)
+SELECT RelationShip.RelationedProductId FROM RelationShip, Product
+WHERE RelationShip.MainProductId = Product.Id;
