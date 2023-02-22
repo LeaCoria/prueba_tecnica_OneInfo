@@ -1,4 +1,5 @@
-3)a)
+3)
+a)
 SELECT * FROM OrderTable WHERE status = 'active';
 
 b)
