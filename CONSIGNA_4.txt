@@ -39,7 +39,9 @@ FUNCION _get_principal_products(id_order):
     
     cursor.EJECUTAR(sql)
     CONSTANTE all_products = cursor.fetchall()
-    // LA CONSULTA SQL DEVUELVE UNA LISTA IDs DE PRODUCTOS PRINCIPALES EN LA ORDEN
+    
+    // LA CONSULTA SQL DEVUELVE UNA LISTA DE 1XN CON LOS IDs DE PRODUCTOS PRINCIPALES EN LA ORDEN
+    
     RETORNAR all_products
 
 
@@ -50,9 +52,11 @@ FUNCION _get_secondary_products(id_order):
                      INNER JOIN OrderTable ON OrderTable.Id = OrderItem.OrderId
                      INNER JOIN RelationShip ON Product.Id = RelationShip.RelationedProductId
                      WHERE OrderItem.OrderId = {{id_order}};"
+    
+    // EN LA SENTENCIA SQL USO INTERPOLACION DE VARIABLES CON "{{}}"
+    
     cursor.EJECUTAR(sql)
 
-    // EN LA SENTENCIA SQL USO INTERPOLACION DE VARIABLES CON "{{}}"
     // ASUMO QUE LA CONSULTA SQL DEVUELVE UNA LISTA DE 1xN CON LOS
     // ID DE PRODUCTOS SECUNDARIOS RELACIONADOS A UN PRODUCTO PRINCIPAL DE LA ORDEN
 
@@ -84,7 +88,6 @@ FUNCION valid_combination(products_in_order, id_order):
         RETORNAR True
     SI NO:
         RETORNAR NOT(False EN primary_products_valid) Y valid_subproduct(secondary_products, id_order)
-    RETORNAR False
 
 FUNCION search_products_id_by_order(id_order):
     CONSTANTE cursor = db.connection.cursor()
@@ -94,7 +97,7 @@ FUNCION search_products_id_by_order(id_order):
     
     // EN LA SENTENCIA SQL USO INTERPOLACION DE VARIABLES CON "{{}}"
     
-    cursor.EJECUTAR(sql)
+    cursor.execute(sql)
     CONSTANTE all_productsid = cursor.fetchall()
 
     // ASUMO QUE LA CONSULTA SQL DEVUELVE UNA LISTA DE 1xN CON
@@ -110,9 +113,6 @@ FUNCION order_is_active(id_order):
     INTENTAR:
         CONSTANTE cursor = db.connection.cursor()
         CONSTANTE sql = "SELECT OrderTable.Id FROM OrderTable WHERE status = 'active';"
-
-        // EN LA SENTENCIA SQL USO INTERPOLACION DE VARIABLES CON "{{}}"
-
         cursor.fetchall(sql)
 
         // ASUMO QUE LA CONSULTA SQL DEVUELVE UNA LISTA DE 1xN
