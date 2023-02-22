@@ -9,7 +9,7 @@ WHERE OrderTable.Status = 'active'
 AND OrderTable.Id = OrderItem.OrderId
 AND Product.Id = OrderItem.ProductId;
 
-// SI SE QUIERE TENER UN ORDEN DE LAS ÓRDENES SE PUEDE AGREGAR GROUP BY DE LA SIGUIENTE MANERA:
+// SI SE QUIERE TENER UN ORDEN DE LAS ÓRDENES SE PUEDE AGREGAR ORDER BY DE LA SIGUIENTE MANERA:
 
 SELECT Product.Id, Product.Name, Product.Code, OrderTable.Id
 FROM OrderTable, OrderItem, Product
